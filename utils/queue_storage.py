@@ -4,7 +4,8 @@ import base64
 import logging
 from azure.storage.queue import QueueClient, BinaryBase64EncodePolicy, BinaryBase64DecodePolicy
 
-QUEUE_CONNECTION_STRING = os.environ.get("AzureQueueConnectionString", "UseDevelopmentStorage=true")
+# Queue Trigger environment config 
+QUEUE_CONNECTION_STRING = os.environ.get("AzureWebJobsStorage", "UseDevelopmentStorage=true")
 QUEUE_TO_PROCESS = "orders-to-process"
 QUEUE_PROCESSED = "orders-processed"
 

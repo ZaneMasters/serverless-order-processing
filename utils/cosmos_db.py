@@ -3,9 +3,9 @@ import logging
 from azure.cosmos import CosmosClient, PartitionKey
 
 # Environment variables
-COSMOS_CONNECTION_STRING = os.environ.get("AzureCosmosDBConnectionString")
-DATABASE_NAME = "orders-db"
-CONTAINER_NAME = "orders"
+COSMOS_CONNECTION_STRING = os.environ.get("COSMOS_CONNECTION_STRING")
+DATABASE_NAME = os.environ.get("COSMOS_DATABASE_NAME", "orders-db")
+CONTAINER_NAME = os.environ.get("COSMOS_CONTAINER_NAME", "orders")
 
 # Initialize Cosmos Client
 # If the connection string isn't available, we warn but don't crash on import

@@ -135,7 +135,7 @@ async def get_durable_status(req: func.HttpRequest, client: df.DurableOrchestrat
 # Queue Triggers
 # ==============================================================================
 
-@app.queue_trigger(arg_name="msg", queue_name="orders-to-process", connection="AzureQueueConnectionString")
+@app.queue_trigger(arg_name="msg", queue_name="orders-to-process", connection="AzureWebJobsStorage")
 @app.durable_client_input(client_name="client")
 async def queue_start_processing(msg: func.QueueMessage, client: df.DurableOrchestrationClient):
     msg_body = msg.get_body().decode('utf-8')
