@@ -49,22 +49,22 @@ def create_order(req: func.HttpRequest) -> func.HttpResponse:
     }
 
     # Idempotency: Create if it doesn't exist
-    is_new = create_order_if_not_exists(order_document)
+    try:
+        is_new = create_order_if_not_exists(order_document)
 
-    if is_new:
-        try:
+        if is_new:
             publish_message("orders-to-process", {"orderId": order_id})
-        except Exception as e:
-            # If queuing fails, we might want to revert the creation or retry.
-            logging.error(f"Failed to publish to queue: {e}")
-            return func.HttpResponse("Internal Server Error", status_code=500)
-        status_code = 202
-    else:
-        # Fetch the existing state to return
-        existing_order = get_order(order_id)
-        if existing_order:
-            order_document = existing_order
-        status_code = 200 # OK, but already existed
+            status_code = 202
+        else:
+            # Fetch the existing state to return
+            existing_order = get_order(order_id)
+            if existing_order:
+                order_document = existing_order
+            status_code = 200 # OK, but already existed
+    except Exception as e:
+        # Catch any critical exception (e.g. Storage Queue timeout, Cosmos missing) to debug directly via HTTP
+        logging.error(f"Internal error processing request: {str(e)}")
+        return func.HttpResponse(f"Interal Server Error (Backend Debug Msg): {str(e)}", status_code=500)
 
     return func.HttpResponse(
         json.dumps({
