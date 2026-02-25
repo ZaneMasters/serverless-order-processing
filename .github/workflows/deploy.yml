@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  AZURE_FUNCTIONAPP_NAME: 'TBD' # Reemplazar con el nombre de la Function App creada por terraform
+  AZURE_FUNCTIONAPP_NAME: 'serverlessv2-prod-func' # Reemplazar con el nombre de la Function App creada por terraform
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' 
   PYTHON_VERSION: '3.10'
 
