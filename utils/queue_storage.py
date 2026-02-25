@@ -2,7 +2,7 @@ import os
 import json
 import base64
 import logging
-from azure.storage.queue import QueueClient, BinaryBase64EncodePolicy, BinaryBase64DecodePolicy
+from azure.storage.queue import QueueClient
 
 # Queue Trigger environment config 
 QUEUE_CONNECTION_STRING = os.environ.get("AzureWebJobsStorage", "UseDevelopmentStorage=true")
@@ -16,9 +16,7 @@ def get_queue_client(queue_name: str) -> QueueClient:
         queue_name=queue_name
     )
     
-    # Azure Functions usually expect base64 encoded messages
-    client.message_encode_policy = BinaryBase64EncodePolicy()
-    client.message_decode_policy = BinaryBase64DecodePolicy()
+    # Manually encoding allows predictable behavior across SDK versions
     return client
 
 def publish_message(queue_name: str, message_dict: dict):
@@ -26,10 +24,11 @@ def publish_message(queue_name: str, message_dict: dict):
     try:
         client = get_queue_client(queue_name)
         
-        # Enforce Base64 Encoding
-        message_bytes = json.dumps(message_dict).encode('utf-8')
+        # Azure Functions normally expect base64 encoded JSON strings for Queue Triggers
+        message_json = json.dumps(message_dict)
+        message_b64 = base64.b64encode(message_json.encode('utf-8')).decode('utf-8')
         
-        client.send_message(message_bytes)
+        client.send_message(message_b64)
         logging.info(f"Published message to queue {queue_name}: {message_dict}")
     except Exception as e:
         logging.error(f"Failed to publish message to queue {queue_name}: {e}")
