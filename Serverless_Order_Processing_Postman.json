@@ -1,0 +1,85 @@
+{
+    "info": {
+        "_postman_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "name": "Serverless Order Processing API",
+        "description": "Prueba Técnica Azure Backend - Python Durable Functions",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Crear Orden (POST)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"orderId\": \"ORD-2026\",\n  \"customerId\": \"CUST-01\",\n  \"items\": [\n    { \"sku\": \"ITEM-A\", \"qty\": 2, \"price\": 100 },\n    { \"sku\": \"ITEM-B\", \"qty\": 1, \"price\": 50 }\n  ]\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/orders",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "orders"
+                    ]
+                },
+                "description": "Envía una orden para ser procesada asíncronamente. Retorna 202 Accepted y pone un mensaje en la Queue."
+            },
+            "response": []
+        },
+        {
+            "name": "2. Consultar Estado de Negocio (GET)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/orders/ORD-2026",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "orders",
+                        "ORD-2026"
+                    ]
+                },
+                "description": "Consulta Cosmos DB para devolver el estado consolidado de la orden (CREATED, PROCESSING o COMPLETED con subtotales)."
+            },
+            "response": []
+        },
+        {
+            "name": "3. Consultar Estado de Orquestación Durable (GET)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/orders/ORD-2026/status",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "orders",
+                        "ORD-2026",
+                        "status"
+                    ]
+                },
+                "description": "Consulta el Framework interno de Durable Task para ver en qué estado exacto está la ejecución del código Orquestador."
+            },
+            "response": []
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "https://serverlessv2-prod-func.azurewebsites.net"
+        }
+    ]
+}
