@@ -17,30 +17,63 @@ El flujo funciona de la siguiente manera:
    - `SaveOrderResult`: Guarda estado final en Cosmos DB (`COMPLETED`).
    - `PublishResultMessage`: Publica confirmación a la cola `orders-processed`.
 
-## Ejecución Local
+## API Endpoints y Flujo de Uso
 
-1. Requiere [Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local).
-2. Requiere el emulador de Storage ([Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite)) o una cuenta real para las colas y Durable Tasks.
-3. Configura tu `local.settings.json` con las cadenas de conexión:
+La aplicación expone una API REST para interactuar de forma sencilla con el sistema Serverless:
 
-   ```json
-   {
-     "IsEncrypted": false,
-     "Values": {
-       "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-       "FUNCTIONS_WORKER_RUNTIME": "python",
-       "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
-       "AzureCosmosDBConnectionString": "<TU CONECTION STRING de Cosmos>",
-       "AzureQueueConnectionString": "<TU CONNECTION STRING de Storage Account>"
-     }
-   }
-   ```
+### 1. Crear Orden (POST `/api/orders`)
 
-4. Instala dependencias: `pip install -r requirements.txt`.
-5. Levanta el proyecto: `func start`.
+Envía una nueva orden de compra para ser encolada. El sistema valida idempotentemente la orden, la crea en Cosmos DB con estado `CREATED` y la envía a la cola `orders-to-process`.
+
+- **Cuerpo esperado:**
+
+```json
+{
+  "orderId": "ORD-123",
+  "customerId": "CUST-01",
+  "items": [
+    { "sku": "ITEM-A", "qty": 2, "price": 100 },
+    { "sku": "ITEM-B", "qty": 1, "price": 999 }
+  ]
+}
+```
+
+- **Respuesta Exitosa:** `202 Accepted`
+
+### 2. Consultar Nivel de Negocio (GET `/api/orders/{orderId}`)
+
+Consulta la base de datos de lectura (Cosmos DB) para ver el estado financiero de la orden.
+
+- **Respuesta en Progreso:**
+
+```json
+{
+  "orderId": "ORD-123",
+  "orderStatus": "PROCESSING",
+  "totals": null
+}
+```
+
+- **Respuesta Completada (Fan-in concluido):**
+
+```json
+{
+  "orderId": "ORD-123",
+  "orderStatus": "COMPLETED",
+  "totals": {
+    "subtotal": 1199.0,
+    "tax": 227.81,
+    "discount": 59.95,
+    "total": 1366.86
+  }
+}
+```
+
+### 3. Diagnóstico de Infraestructura (GET `/api/orders/{orderId}/status`)
+
+Retorna los metadatos crudos del framework de Durable Functions, especificando en qué actividad se encuentra atrapado el orquestador (ej. `Running`, `Completed`, `Failed`). Útil para depurar problemas de ejecución en paralelo.
 
 ## CI/CD
 
 El proyecto cuenta con un flujo completo de subida en `.github/workflows/deploy.yml` que empaqueta y publica en Azure la aplicación cuando se hace PUSH a `main`.
 
-Requiere configurar el Secret: `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` a nivel de GitHub Actions.
