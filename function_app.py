@@ -164,7 +164,7 @@ async def queue_start_processing(msg: func.QueueMessage, client: df.DurableOrche
     upsert_order(order)
 
     # Start Orchestrator using order_id as instance_id
-    instance_id = await client.start_new("ProcessOrderOrchestrator", instance_id=order_id, client_input=order_id)
+    instance_id = await client.start_new("process_order_orchestrator", instance_id=order_id, client_input=order_id)
     logging.info(f"Started orchestration with ID = '{instance_id}'.")
 
 
